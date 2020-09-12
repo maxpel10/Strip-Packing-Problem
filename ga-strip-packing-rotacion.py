@@ -1,12 +1,13 @@
 import random
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 
 # Clase que representa a los rectangulos
 class Rectangulo:
     def __init__(self, w=-1, h=-1):
-        if(w == -1 and h == -1):
+        if w == -1 and h == -1:
             # Al ancho le asigno un random entero entre 10 y 50
             self.w = random.randint(10, 50)
 
@@ -20,9 +21,14 @@ class Rectangulo:
             # A la altura le asigno un random entero entre 10 y 75
             self.h = h
 
+        # Le asigno un color
+        def r():
+            return random.randint(0, 255)
+
+        self.color = ('#%02X%02X%02X' % (r(), r(), r()))
+
 
 def crear_poblacion_inicial(tamano_poblacion, tamano_permutacion):
-
     # Crea la poblacion tomando permutaciones de randoms
     return [list(np.random.permutation(range(tamano_permutacion))) for _ in range(tamano_poblacion)]
 
@@ -32,7 +38,7 @@ def generar_rectangulos(cantidad):
     return [Rectangulo() for _ in range(cantidad)]
 
 
-def altura_individuo(individuo, rectangulos, W):
+def calcular_niveles(individuo, rectangulos, W):
     # Variables a utilizar para calcular la altura del individuo
     niveles = []
     nivel_actual = []
@@ -52,9 +58,15 @@ def altura_individuo(individuo, rectangulos, W):
 
     # Agrego el ultimo nivel
     niveles.append(nivel_actual)
-
     # Sumo las alturas máximas de los niveles
-    return sum([max(h) for h in niveles])
+    altura = sum([max(h) for h in niveles])
+
+    return niveles, altura
+
+
+def altura_individuo(individuo, rectangulos, W):
+    _, altura = calcular_niveles(individuo, rectangulos, W)
+    return altura
 
 
 def calcular_fitness(poblacion, rectangulos, W):
@@ -147,6 +159,36 @@ def mutar_poblacion_aleatoriamente(poblacion, pm):
     return list(map(lambda x: x if random.uniform(0, 1) > pm else mutar_individuo(x), poblacion))
 
 
+def getCoordenadas(ancho, alto, x_inicial, y_inicial):
+    x = [x_inicial, x_inicial + ancho, x_inicial + ancho, x_inicial, x_inicial]
+    y = [y_inicial, y_inicial, y_inicial + alto, y_inicial + alto, y_inicial]
+    return x, y
+
+
+def dibujar_solucion(individuo, rectangulos, W, titulo):
+    niveles, altura = calcular_niveles(individuo, rectangulos, W)
+    nro_individuo = 0
+    x = 0
+    y = 0
+    fig = plt.figure(1, figsize=(5, 5), dpi=90)
+    grafico = fig.add_subplot()
+    for nivel in niveles:
+        for _ in nivel:
+            rectagulo = rectangulos[individuo[nro_individuo]]
+            coordenadas_x, coordenadas_y = getCoordenadas(rectagulo.w, rectagulo.h, x, y)
+            grafico.plot(coordenadas_x, coordenadas_y, color=rectagulo.color)
+            nro_individuo += 1
+            x += rectagulo.w
+        x = 0
+        y += max(nivel)
+    plt.xlabel('Ancho')
+    plt.ylabel('Alto')
+    plt.xlim(0, W)
+    plt.ylim(0, altura + 1)
+    plt.title(titulo)
+    plt.show()
+
+
 random.seed(int(round(time.time() * 1000)))
 
 # Descomentar para que genere rectangulos aleatorios
@@ -181,9 +223,12 @@ fitness = calcular_fitness(poblacion, rectangulos, W)
 
 # Calculo el mejor fitness de la población inicial
 mejor_fitness = min(fitness)
+mejor_solucion_inicial = poblacion[fitness.index(min(fitness))]
+print('Mejor fitness inicial: ', mejor_fitness, ', Individuo: ', mejor_solucion_inicial)
+dibujar_solucion(mejor_solucion_inicial, rectangulos, W, "Mejor solución inicial")
+
 # Lo agrego al historial
 historial_mejores_fitness.append(mejor_fitness)
-print('Mejor fitness inicial: ', mejor_fitness)
 
 # Algoritmo genético
 for generacion in range(max_generaciones):
@@ -217,10 +262,9 @@ for generacion in range(max_generaciones):
 
 mejor_solucion = poblacion[fitness.index(min(fitness))]
 print('Mejor fitness final: ', mejor_fitness, ', Individuo:', mejor_solucion)
+dibujar_solucion(mejor_solucion, rectangulos, W, "Mejor solución")
 
 # Genero un gráfico del progreso
-import matplotlib.pyplot as plt
-
 plt.plot(historial_mejores_fitness)
 plt.xlabel('Generacion')
 plt.ylabel('Mejor fitness (altura)')
