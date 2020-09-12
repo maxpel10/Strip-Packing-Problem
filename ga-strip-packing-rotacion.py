@@ -28,7 +28,7 @@ class Rectangulo:
         self.color = ('#%02X%02X%02X' % (r(), r(), r()))
 
 
-def crear_poblacion_inicial(tamano_poblacion, tamano_permutacion):
+def crear_poblacion_inicial(tamano_permutacion):
     # Crea la poblacion tomando permutaciones de randoms
     return [list(np.random.permutation(range(tamano_permutacion))) for _ in range(tamano_poblacion)]
 
@@ -38,23 +38,23 @@ def generar_rectangulos(cantidad):
     return [Rectangulo() for _ in range(cantidad)]
 
 
-def calcular_niveles(individuo, rectangulos, W):
+def calcular_niveles(individuo):
     # Variables a utilizar para calcular la altura del individuo
     niveles = []
     nivel_actual = []
     ancho_nivel_actual = 0
 
     # Acomodo los rectangulos en niveles
-    for i in individuo:
+    for j in individuo:
         # Si el rectángulo cabe en el nivel actual lo agrego
-        if ancho_nivel_actual + rectangulos[int(i)].w <= W:
-            nivel_actual.append(rectangulos[int(i)].h)
-            ancho_nivel_actual += rectangulos[int(i)].w
+        if ancho_nivel_actual + rectangulos[int(j)].w <= W:
+            nivel_actual.append(rectangulos[int(j)].h)
+            ancho_nivel_actual += rectangulos[int(j)].w
         # Guardo el nivel anterior  y creo uno nuevo con el nuevo rectángulo
         else:
             niveles.append(nivel_actual)
-            nivel_actual = [rectangulos[int(i)].h]
-            ancho_nivel_actual = rectangulos[int(i)].w
+            nivel_actual = [rectangulos[int(j)].h]
+            ancho_nivel_actual = rectangulos[int(j)].w
 
     # Agrego el ultimo nivel
     niveles.append(nivel_actual)
@@ -64,17 +64,17 @@ def calcular_niveles(individuo, rectangulos, W):
     return niveles, altura
 
 
-def altura_individuo(individuo, rectangulos, W):
-    _, altura = calcular_niveles(individuo, rectangulos, W)
+def altura_individuo(individuo):
+    _, altura = calcular_niveles(individuo)
     return altura
 
 
-def calcular_fitness(poblacion, rectangulos, W):
+def calcular_fitness():
     # Calculo las alturas de toda la poblacion
-    return list(map(lambda x: altura_individuo(x, rectangulos, W), poblacion))
+    return list(map(lambda x: altura_individuo(x), poblacion))
 
 
-def seleccionar_individuo_por_competicion(poblacion, fitness, tamano_poblacion):
+def seleccionar_individuo_por_competicion():
     # Elijo a individuos para que compitan
     peleador_1 = random.randint(0, tamano_poblacion - 1)
     peleador_2 = random.randint(0, tamano_poblacion - 1)
@@ -93,47 +93,47 @@ def seleccionar_individuo_por_competicion(poblacion, fitness, tamano_poblacion):
     return poblacion[ganador]
 
 
-def crossover(padre_1, padre_2):
+def crossover(p1, p2):
     # Realizo el pmx para crear los nuevos individuos
-    hijo_1 = pmx(list(padre_1), list(padre_2))
-    hijo_2 = pmx(list(padre_2), list(padre_1))
+    h1 = pmx(list(p1), list(p2))
+    h2 = pmx(list(p2), list(p1))
 
-    return hijo_1, hijo_2
+    return h1, h2
 
 
-def pmx(padre_1, padre_2):
-    tamano_cromosoma = len(padre_1)
+def pmx(p1, p2):
+    tamano_cromosoma = len(p1)
 
     # Calculo los puntos de corte
     primer_punto = random.randint(1, tamano_cromosoma - 2)
     segundo_punto = random.randint(primer_punto + 1, tamano_cromosoma - 1)
 
-    # Obtengo la lista entre los puntos de corte del padre_1
-    lista_intermedia_1 = padre_1[primer_punto:segundo_punto]
-    # Obtengo la lista entre los puntos de corte del padre_2
-    lista_intermedia_2 = padre_2[primer_punto:segundo_punto]
+    # Obtengo la lista entre los puntos de corte del p1
+    lista_intermedia_1 = p1[primer_punto:segundo_punto]
+    # Obtengo la lista entre los puntos de corte del p2
+    lista_intermedia_2 = p2[primer_punto:segundo_punto]
 
-    # Paso los elementos intermedios del padre_1 al hijo y el resto de los elementos los pongo en -1
+    # Paso los elementos intermedios del p1 al hijo y el resto de los elementos los pongo en -1
     hijo = [-1] * primer_punto + lista_intermedia_1 + [-1] * (tamano_cromosoma - segundo_punto)
 
     # Guardo los mapeos
     mapeo = []
-    for i in range(segundo_punto - primer_punto):
-        if lista_intermedia_2[i] not in hijo:
-            mapeo.append((lista_intermedia_2[i], lista_intermedia_1[i]))
+    for j in range(segundo_punto - primer_punto):
+        if lista_intermedia_2[j] not in hijo:
+            mapeo.append((lista_intermedia_2[j], lista_intermedia_1[j]))
 
     # Relleno el hijo con los mapeos
     for x in mapeo:
         m1 = x[0]
         m2 = x[1]
-        while hijo[padre_2.index(m2)] != -1:
-            m2 = hijo[padre_2.index(m2)]
-        hijo[padre_2.index(m2)] = m1
+        while hijo[p2.index(m2)] != -1:
+            m2 = hijo[p2.index(m2)]
+        hijo[p2.index(m2)] = m1
 
     # Relleno los elementos del hijo que todavía están en -1
-    for i in range(tamano_cromosoma):
-        if hijo[i] == -1:
-            hijo[i] = padre_2[i]
+    for j in range(tamano_cromosoma):
+        if hijo[j] == -1:
+            hijo[j] = p2[j]
 
     return np.array(hijo)
 
@@ -154,19 +154,19 @@ def mutar_individuo(x):
     return x
 
 
-def mutar_poblacion_aleatoriamente(poblacion, pm):
+def mutar_poblacion_aleatoriamente():
     # Aplico mutación aleatoria
     return list(map(lambda x: x if random.uniform(0, 1) > pm else mutar_individuo(x), poblacion))
 
 
-def getCoordenadas(ancho, alto, x_inicial, y_inicial):
+def get_coordenadas(ancho, alto, x_inicial, y_inicial):
     x = [x_inicial, x_inicial + ancho, x_inicial + ancho, x_inicial, x_inicial]
     y = [y_inicial, y_inicial, y_inicial + alto, y_inicial + alto, y_inicial]
     return x, y
 
 
-def dibujar_solucion(individuo, rectangulos, W, titulo):
-    niveles, altura = calcular_niveles(individuo, rectangulos, W)
+def dibujar_solucion(individuo, titulo):
+    niveles, altura = calcular_niveles(individuo)
     nro_individuo = 0
     x = 0
     y = 0
@@ -175,7 +175,7 @@ def dibujar_solucion(individuo, rectangulos, W, titulo):
     for nivel in niveles:
         for _ in nivel:
             rectagulo = rectangulos[individuo[nro_individuo]]
-            coordenadas_x, coordenadas_y = getCoordenadas(rectagulo.w, rectagulo.h, x, y)
+            coordenadas_x, coordenadas_y = get_coordenadas(rectagulo.w, rectagulo.h, x, y)
             grafico.plot(coordenadas_x, coordenadas_y, color=rectagulo.color)
             nro_individuo += 1
             x += rectagulo.w
@@ -216,16 +216,16 @@ pc = 0.65
 historial_mejores_fitness = []
 
 # Crear la población inicial
-poblacion = crear_poblacion_inicial(tamano_poblacion, cantidad_rectangulos)
+poblacion = crear_poblacion_inicial(cantidad_rectangulos)
 
 # Calcular fitness de la población inicial
-fitness = calcular_fitness(poblacion, rectangulos, W)
+fitness = calcular_fitness()
 
 # Calculo el mejor fitness de la población inicial
 mejor_fitness = min(fitness)
 mejor_solucion_inicial = poblacion[fitness.index(min(fitness))]
 print('Mejor fitness inicial: ', mejor_fitness, ', Individuo: ', mejor_solucion_inicial)
-dibujar_solucion(mejor_solucion_inicial, rectangulos, W, "Mejor solución inicial")
+dibujar_solucion(mejor_solucion_inicial, "Mejor solución inicial")
 
 # Lo agrego al historial
 historial_mejores_fitness.append(mejor_fitness)
@@ -238,8 +238,8 @@ for generacion in range(max_generaciones):
 
     # Creo la nueva poblacion generando dos hijos a la vez
     for i in range(int(tamano_poblacion / 2)):
-        padre_1 = seleccionar_individuo_por_competicion(poblacion, fitness, tamano_poblacion)
-        padre_2 = seleccionar_individuo_por_competicion(poblacion, fitness, tamano_poblacion)
+        padre_1 = seleccionar_individuo_por_competicion()
+        padre_2 = seleccionar_individuo_por_competicion()
         if random.uniform(0, 1) <= pc:
             hijo_1, hijo_2 = crossover(padre_1, padre_2)
         else:
@@ -251,18 +251,18 @@ for generacion in range(max_generaciones):
     poblacion = np.array(nueva_poblacion)
 
     # Aplico la mutación
-    poblacion = mutar_poblacion_aleatoriamente(poblacion, pm)
+    poblacion = mutar_poblacion_aleatoriamente()
 
     # Calculo el fitness de la poblacion
-    fitness = calcular_fitness(poblacion, rectangulos, W)
+    fitness = calcular_fitness()
     # Calculo el mejor fitness de la población
     mejor_fitness = min(fitness)
     # Lo agrego al historial
     historial_mejores_fitness.append(mejor_fitness)
 
 mejor_solucion = poblacion[fitness.index(min(fitness))]
-print('Mejor fitness final: ', mejor_fitness, ', Individuo:', mejor_solucion)
-dibujar_solucion(mejor_solucion, rectangulos, W, "Mejor solución")
+print('Mejor fitness final: ', mejor_fitness, ', Individuo:', list(mejor_solucion))
+dibujar_solucion(mejor_solucion, "Mejor solución")
 
 # Genero un gráfico del progreso
 plt.plot(historial_mejores_fitness)
