@@ -6,36 +6,37 @@ import matplotlib.pyplot as plt
 
 # Clase que representa a los rectangulos
 class Rectangulo:
-    def __init__(self, w=-1, h=-1):
-        if w == -1 and h == -1:
-            # Al ancho le asigno un random entero entre 10 y 50
-            self.w = random.randint(10, 50)
+    def __init__(self, w, h):
+        # Al ancho le asigno un random entero entre 10 y 50
+        self.w = w
 
-            # A la altura le asigno un random entero entre 10 y 75
-            self.h = random.randint(10, 75)
+        # A la altura le asigno un random entero entre 10 y 75
+        self.h = h
 
-        else:
-            # Al ancho le asigno un random entero entre 10 y 50
-            self.w = w
-
-            # A la altura le asigno un random entero entre 10 y 75
-            self.h = h
-
-        # Le asigno un color
+        # Funcion que retorna un random entre 0 y 255
         def r():
             return random.randint(0, 255)
 
+        # Le asigno un color
         self.color = ('#%02X%02X%02X' % (r(), r(), r()))
 
 
-def crear_poblacion_inicial(tamano_permutacion):
+def get_info_instancia(file):
+    # Leo el archivo file y obtengo W y los rectangulos
+    archivo = open(file, 'r')
+    contenido = [int(x) for x in archivo.read().split()]
+    ancho = contenido[0]
+    r = []
+    for j in range(1, len(contenido)):
+        if j % 2 != 0:
+            r.append(Rectangulo(contenido[j], contenido[j + 1]))
+    archivo.close()
+    return r, ancho
+
+
+def crear_poblacion_inicial():
     # Crea la poblacion tomando permutaciones de randoms
-    return [list(np.random.permutation(range(tamano_permutacion))) for _ in range(tamano_poblacion)]
-
-
-def generar_rectangulos(cantidad):
-    # Genero la cantidad de rectangulos pasados por parámetro
-    return [Rectangulo() for _ in range(cantidad)]
+    return [list(np.random.permutation(range(len(rectangulos)))) for _ in range(tamano_poblacion)]
 
 
 def calcular_niveles(individuo):
@@ -189,26 +190,13 @@ def dibujar_solucion(individuo, titulo):
     plt.show()
 
 
+# Generar una semilla que dependa del tiempo asi produzco independencia en la secuencia de numeros aleatorios utilizados
 random.seed(int(round(time.time() * 1000)))
 
-# Descomentar para que genere rectangulos aleatorios
-cantidad_rectangulos = 20
-rectangulos = generar_rectangulos(cantidad_rectangulos)
+# Obtener los datos de la instancia
+rectangulos, W = get_info_instancia('instancias/spp9a.txt')
 
-# Descomentar para que genere 10 rectangulos fijos
-# cantidad_rectangulos = 10
-# rectangulos = [Rectangulo(57, 28), Rectangulo(39, 31), Rectangulo(66, 28), Rectangulo(52, 11), Rectangulo(60, 26),
-#                Rectangulo(13, 26), Rectangulo(13, 21), Rectangulo(72, 36), Rectangulo(27, 18), Rectangulo(43, 48)]
-
-# Descomentar para que genere 20 rectangulos fijos
-# cantidad_rectangulos = 20
-# rectangulos = [Rectangulo(57, 28), Rectangulo(39, 31), Rectangulo(66, 28), Rectangulo(52, 11), Rectangulo(60, 26),
-#                Rectangulo(13, 26), Rectangulo(13, 21), Rectangulo(72, 36), Rectangulo(27, 18), Rectangulo(43, 48),
-#                Rectangulo(57, 28), Rectangulo(39, 31), Rectangulo(66, 28), Rectangulo(52, 11), Rectangulo(60, 26),
-#                Rectangulo(13, 26), Rectangulo(13, 21), Rectangulo(72, 36), Rectangulo(27, 18), Rectangulo(43, 48)]
-
-# Ajusto parámetros
-W = 100
+# Setear los parámetros del algoritmo genético
 tamano_poblacion = 50
 max_generaciones = 10000
 pm = 0.1
@@ -216,7 +204,7 @@ pc = 0.65
 historial_mejores_fitness = []
 
 # Crear la población inicial
-poblacion = crear_poblacion_inicial(cantidad_rectangulos)
+poblacion = crear_poblacion_inicial()
 
 # Calcular fitness de la población inicial
 fitness = calcular_fitness()
