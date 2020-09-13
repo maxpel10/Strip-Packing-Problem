@@ -36,7 +36,19 @@ def get_info_instancia(file):
 
 def crear_poblacion_inicial():
     # Crea la poblacion tomando permutaciones de randoms
-    return [list(np.random.permutation(range(len(rectangulos)))) for _ in range(tamano_poblacion)]
+    rotacion = []
+    for j in range(len(rectangulos)):
+        rotacion.append(bool(random.getrandbits(1)))
+    return list(map(lambda x: corregir_rotacion(x),
+                    [list(zip(np.random.permutation(range(len(rectangulos))), rotacion)) for _ in
+                     range(tamano_poblacion)]))
+
+
+def corregir_rotacion(individuo):
+    for j in range(len(individuo)):
+        if individuo[j][1] and rectangulos[individuo[j][0]].h > W:
+            individuo[j] = (individuo[j][0], False)
+    return individuo
 
 
 def calcular_niveles(individuo):
@@ -47,15 +59,17 @@ def calcular_niveles(individuo):
 
     # Acomodo los rectangulos en niveles
     for j in individuo:
+        w_j = rectangulos[int(j[0])].w if not j[1] else rectangulos[int(j[0])].h
+        h_j = rectangulos[int(j[0])].h if not j[1] else rectangulos[int(j[0])].w
         # Si el rectángulo cabe en el nivel actual lo agrego
-        if ancho_nivel_actual + rectangulos[int(j)].w <= W:
-            nivel_actual.append(rectangulos[int(j)].h)
-            ancho_nivel_actual += rectangulos[int(j)].w
+        if ancho_nivel_actual + w_j <= W:
+            nivel_actual.append(h_j)
+            ancho_nivel_actual += w_j
         # Guardo el nivel anterior  y creo uno nuevo con el nuevo rectángulo
         else:
             niveles.append(nivel_actual)
-            nivel_actual = [rectangulos[int(j)].h]
-            ancho_nivel_actual = rectangulos[int(j)].w
+            nivel_actual = [h_j]
+            ancho_nivel_actual = w_j
 
     # Agrego el ultimo nivel
     niveles.append(nivel_actual)
@@ -95,9 +109,25 @@ def seleccionar_individuo_por_competicion():
 
 
 def crossover(p1, p2):
-    # Realizo el pmx para crear los nuevos individuos
-    h1 = pmx(list(p1), list(p2))
-    h2 = pmx(list(p2), list(p1))
+    # Tomo la primer componente de cada elemento del padre, es decir, el elemento correspondiente a la permutacion
+    p1_permutacion = [j[0] for j in p1]
+    p2_permutacion = [j[0] for j in p2]
+
+    # Realizo el pmx sobre las permutaciones
+    h1_permutacion = pmx(p1_permutacion, p2_permutacion)
+    h2_permutacion = pmx(p2_permutacion, p1_permutacion)
+
+    # Tomo la segunda componente de cada elemento del padre, es decir, el elemento correspondiente a la rotacion
+    p1_rotacion = [j[1] for j in p1]
+    p2_rotacion = [j[1] for j in p2]
+
+    # Realizo el crossover correspondiente a la rotación
+    h1_rotacion = crossover_rotacion(p1_rotacion, p2_rotacion)
+    h2_rotacion = crossover_rotacion(p2_rotacion, p1_rotacion)
+
+    # Armo los nuevos individuos
+    h1 = corregir_rotacion(list(zip(h1_permutacion, h1_rotacion)))
+    h2 = corregir_rotacion(list(zip(h2_permutacion, h2_rotacion)))
 
     return h1, h2
 
@@ -136,7 +166,13 @@ def pmx(p1, p2):
         if hijo[j] == -1:
             hijo[j] = p2[j]
 
-    return np.array(hijo)
+    return hijo
+
+
+def crossover_rotacion(p1, p2):
+    # Calculo el punto de corte
+    punto = random.randint(0, len(p1))
+    return p1[0:punto] + p2[punto:]
 
 
 def mutar_individuo(x):
@@ -152,7 +188,7 @@ def mutar_individuo(x):
     x[indice_1] = gen_2
     x[indice_2] = gen_1
 
-    return x
+    return corregir_rotacion(x)
 
 
 def mutar_poblacion_aleatoriamente():
@@ -171,21 +207,26 @@ def dibujar_solucion(individuo, titulo):
     nro_individuo = 0
     x = 0
     y = 0
-    fig = plt.figure(1, figsize=(5, 5), dpi=90)
-    grafico = fig.add_subplot()
+    fig = plt.figure(1, figsize=(6, 6), dpi=100)
+    axis = fig.gca()
+    axis.set_aspect('equal', 'box')
+
     for nivel in niveles:
         for _ in nivel:
-            rectagulo = rectangulos[individuo[nro_individuo]]
-            coordenadas_x, coordenadas_y = get_coordenadas(rectagulo.w, rectagulo.h, x, y)
-            grafico.plot(coordenadas_x, coordenadas_y, color=rectagulo.color)
+            rectagulo = rectangulos[individuo[nro_individuo][0]]
+            w = rectagulo.w if not individuo[nro_individuo][1] else rectagulo.h
+            h = rectagulo.h if not individuo[nro_individuo][1] else rectagulo.w
+            coordenadas_x, coordenadas_y = get_coordenadas(w, h, x, y)
+            axis.fill(coordenadas_x, coordenadas_y, facecolor=rectagulo.color, edgecolor="#000000")
             nro_individuo += 1
-            x += rectagulo.w
+            x += w
         x = 0
         y += max(nivel)
+
     plt.xlabel('Ancho')
     plt.ylabel('Alto')
     plt.xlim(0, W)
-    plt.ylim(0, altura + 1)
+    plt.ylim(0, 35)
     plt.title(titulo)
     plt.show()
 
@@ -194,7 +235,7 @@ def dibujar_solucion(individuo, titulo):
 random.seed(int(round(time.time() * 1000)))
 
 # Obtener los datos de la instancia
-rectangulos, W = get_info_instancia('instancias/spp9a.txt')
+rectangulos, W = get_info_instancia('instancias/spp13.txt')
 
 # Setear los parámetros del algoritmo genético
 tamano_poblacion = 50
@@ -236,7 +277,7 @@ for generacion in range(max_generaciones):
         nueva_poblacion.append(hijo_2)
 
     # Reemplazo la vieja población por una nueva
-    poblacion = np.array(nueva_poblacion)
+    poblacion = nueva_poblacion
 
     # Aplico la mutación
     poblacion = mutar_poblacion_aleatoriamente()
