@@ -6,30 +6,36 @@ import matplotlib.pyplot as plt
 
 # Clase que representa a los rectangulos
 class Rectangulo:
-    def __init__(self, w, h):
+    def __init__(self, w, h, color):
         # Al ancho le asigno un random entero entre 10 y 50
         self.w = w
 
         # A la altura le asigno un random entero entre 10 y 75
         self.h = h
 
-        # Funcion que retorna un random entre 0 y 255
-        def r():
-            return random.randint(0, 255)
-
         # Le asigno un color
-        self.color = ('#%02X%02X%02X' % (r(), r(), r()))
+        self.color = color
 
 
 def get_info_instancia(file):
+    # Obtengo los colores para representar a los rectangulos
+    def get_colores():
+        a = open('colores.txt', 'r')
+        c = [x for x in a.read().split()]
+        a.close()
+        return c
+
     # Leo el archivo file y obtengo W y los rectangulos
     archivo = open(file, 'r')
     contenido = [int(x) for x in archivo.read().split()]
     ancho = contenido[0]
     r = []
+    colores = get_colores()
+    index_colores = 0
     for j in range(1, len(contenido)):
         if j % 2 != 0:
-            r.append(Rectangulo(contenido[j], contenido[j + 1]))
+            r.append(Rectangulo(contenido[j], contenido[j + 1], colores[index_colores]))
+            index_colores += 1
     archivo.close()
     return r, ancho
 
@@ -37,9 +43,12 @@ def get_info_instancia(file):
 def crear_poblacion_inicial():
     # Crea la poblacion tomando permutaciones de randoms
     rotacion = []
-    for j in range(len(rectangulos)):
-        rotacion.append(bool(random.getrandbits(1)))
-    return list(map(lambda x: corregir_rotacion(x),
+    if rotar:
+        for j in range(len(rectangulos)):
+            rotacion.append(bool(random.getrandbits(1)))
+    else:
+        rotacion = [False] * len(rectangulos)
+    return list(map(lambda x: corregir_rotacion(x) if rotar else x,
                     [list(zip(np.random.permutation(range(len(rectangulos))), rotacion)) for _ in
                      range(tamano_poblacion)]))
 
@@ -121,13 +130,18 @@ def crossover(p1, p2):
     p1_rotacion = [j[1] for j in p1]
     p2_rotacion = [j[1] for j in p2]
 
-    # Realizo el crossover correspondiente a la rotación
-    h1_rotacion = crossover_rotacion(p1_rotacion, p2_rotacion)
-    h2_rotacion = crossover_rotacion(p2_rotacion, p1_rotacion)
+    if rotar:
+        # Realizo el crossover correspondiente a la rotación
+        h1_rotacion = crossover_rotacion(p1_rotacion, p2_rotacion)
+        h2_rotacion = crossover_rotacion(p2_rotacion, p1_rotacion)
 
-    # Armo los nuevos individuos
-    h1 = corregir_rotacion(list(zip(h1_permutacion, h1_rotacion)))
-    h2 = corregir_rotacion(list(zip(h2_permutacion, h2_rotacion)))
+        # Armo los nuevos individuos
+        h1 = corregir_rotacion(list(zip(h1_permutacion, h1_rotacion)))
+        h2 = corregir_rotacion(list(zip(h2_permutacion, h2_rotacion)))
+    else:
+        # Armo los nuevos individuos
+        h1 = corregir_rotacion(list(zip(h1_permutacion, [False] * len(p1))))
+        h2 = corregir_rotacion(list(zip(h2_permutacion, [False] * len(p1))))
 
     return h1, h2
 
@@ -188,7 +202,7 @@ def mutar_individuo(x):
     x[indice_1] = gen_2
     x[indice_2] = gen_1
 
-    return corregir_rotacion(x)
+    return corregir_rotacion(x) if rotar else x
 
 
 def mutar_poblacion_aleatoriamente():
@@ -236,6 +250,7 @@ random.seed(int(round(time.time() * 1000)))
 
 # Obtener los datos de la instancia
 rectangulos, W = get_info_instancia('instancias/spp13.txt')
+rotar = True
 
 # Setear los parámetros del algoritmo genético
 tamano_poblacion = 50
