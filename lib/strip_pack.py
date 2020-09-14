@@ -2,30 +2,68 @@ import random
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from utils import calcular_niveles
+
+
+def calcular_niveles(individuo, rectangulos, W):
+    # Variables a utilizar para calcular la altura del individuo
+    niveles = []
+    nivel_actual = []
+    ancho_nivel_actual = 0
+
+    # Acomodo los rectangulos en niveles
+    for j in individuo:
+        w_j = rectangulos[int(j[0])].w if not j[1] else rectangulos[int(j[0])].h
+        h_j = rectangulos[int(j[0])].h if not j[1] else rectangulos[int(j[0])].w
+        # Si el rectángulo cabe en el nivel actual lo agrego
+        if ancho_nivel_actual + w_j <= W:
+            nivel_actual.append(h_j)
+            ancho_nivel_actual += w_j
+        # Guardo el nivel anterior  y creo uno nuevo con el nuevo rectángulo
+        else:
+            niveles.append(nivel_actual)
+            nivel_actual = [h_j]
+            ancho_nivel_actual = w_j
+
+    # Agrego el ultimo nivel
+    niveles.append(nivel_actual)
+    # Sumo las alturas máximas de los niveles
+    altura = sum([max(h) for h in niveles])
+
+    return niveles, altura
 
 
 def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
     def crear_poblacion_inicial():
-        # Crea la poblacion tomando permutaciones de randoms
+        # Crea la poblacion tomando permutaciones de randoms y booleanos
+        # que indica la rotación o no de cada elemento del individuo
         rotacion = []
+
+        # Si está activada la rotación, los booleanos son randoms
         if rotar:
             for j in range(len(rectangulos)):
                 rotacion.append(bool(random.getrandbits(1)))
+        # Si no está actuvada la rotación, los booleanos son todos False
         else:
             rotacion = [False] * len(rectangulos)
+
+        # Combino los booleanos con la permutación
         return list(map(lambda x: corregir_rotacion(x) if rotar else x,
                         [list(zip(np.random.permutation(range(len(rectangulos))), rotacion)) for _ in
                          range(tamano_poblacion)]))
 
     def corregir_rotacion(individuo):
+        # Si el elemento del individuo está rotado y supera los límites del strip se deshace la rotación
         for j in range(len(individuo)):
             if individuo[j][1] and rectangulos[individuo[j][0]].h > W:
                 individuo[j] = (individuo[j][0], False)
+
+        # Retorna el individuo que cumpla con tener ancho menor que el ancho del strip
         return individuo
 
     def altura_individuo(individuo):
+        # Obtengo la altura del individuo
         _, altura = calcular_niveles(individuo, rectangulos, W)
+
         return altura
 
     def calcular_fitness():
@@ -63,6 +101,7 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         p1_rotacion = [j[1] for j in p1]
         p2_rotacion = [j[1] for j in p2]
 
+        # Si está activada la rotación
         if rotar:
             # Realizo el crossover correspondiente a la rotación
             h1_rotacion = crossover_rotacion(p1_rotacion, p2_rotacion)
@@ -71,14 +110,18 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
             # Armo los nuevos individuos
             h1 = corregir_rotacion(list(zip(h1_permutacion, h1_rotacion)))
             h2 = corregir_rotacion(list(zip(h2_permutacion, h2_rotacion)))
+
+        # Si no está activada la rotación
         else:
-            # Armo los nuevos individuos
+            # Obtengo una lista con todos elementos falsos y armo los nuevos individuos
             h1 = corregir_rotacion(list(zip(h1_permutacion, [False] * len(p1))))
             h2 = corregir_rotacion(list(zip(h2_permutacion, [False] * len(p1))))
 
+        # Retorno los hijos
         return h1, h2
 
     def pmx(p1, p2):
+        # Obtengo el tamano del individuo
         tamano_cromosoma = len(p1)
 
         # Calculo los puntos de corte
@@ -117,6 +160,8 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
     def crossover_rotacion(p1, p2):
         # Calculo el punto de corte
         punto = random.randint(0, len(p1))
+
+        # Retorno la combinación de los genes de los padres
         return p1[0:punto] + p2[punto:]
 
     def mutar_individuo(x):
@@ -132,6 +177,7 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         x[indice_1] = gen_2
         x[indice_2] = gen_1
 
+        # Corrijo los elementos que tiene más ancho de lo permido si la rotación está activada
         return corregir_rotacion(x) if rotar else x
 
     def mutar_poblacion_aleatoriamente():
@@ -142,6 +188,7 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
     # independencia en la secuencia de numeros aleatorios utilizados
     random.seed(int(round(time.time() * 1000)))
 
+    # Variables para almacenar el progreso de la ejecucion
     historial_mejores_fitness = []
     historial_mejores_individuos = []
 
@@ -167,12 +214,18 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
 
         # Creo la nueva poblacion generando dos hijos a la vez
         for i in range(int(tamano_poblacion / 2)):
+            # Selecciono los padres
             padre_1 = seleccionar_individuo_por_competicion()
             padre_2 = seleccionar_individuo_por_competicion()
+
+            # Con probabilidad pc hago crossover
             if random.uniform(0, 1) <= pc:
                 hijo_1, hijo_2 = crossover(padre_1, padre_2)
+            # No hago crossover
             else:
                 hijo_1, hijo_2 = padre_1, padre_2
+
+            # Guardo los hijos en la nueva población
             nueva_poblacion.append(hijo_1)
             nueva_poblacion.append(hijo_2)
 
@@ -193,14 +246,11 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         historial_mejores_fitness.append(mejor_fitness)
         historial_mejores_individuos.append(mejor_solucion_inicial)
 
+    # Calculo mejor fitness y mejor individuo solución
     mejor_fitness = min(historial_mejores_fitness)
     mejor_solucion = historial_mejores_individuos[historial_mejores_fitness.index(mejor_fitness)]
+
+    # Imprimo la información de la ejecución
     print('Mejor fitness: ', mejor_fitness, ', Individuo:', mejor_solucion)
 
     return mejor_fitness, mejor_solucion
-
-    # Genero un gráfico del progreso
-    plt.plot(historial_mejores_fitness)
-    plt.xlabel('Generacion')
-    plt.ylabel('Mejor fitness (altura)')
-    plt.show()
