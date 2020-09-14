@@ -3,6 +3,39 @@ import numpy as np
 import time
 
 
+def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm, pc, generaciones, progreso, pantalla):
+    # Creo las listas para almacenar los mejores fitness y soluciones de cada iteración
+    historial_mejores_fitness = []
+    historial_mejores_soluciones = []
+
+    # Itero la cantidad de veces ingresadas por pantalla
+    for i in range(iteraciones):
+        # Obtengo mejor fitness y mejor solución de la iteración
+        mejor_fitness, mejor_solucion = run(rectangulos, w, rotar, tamano_poblacion, pm, pc, generaciones)
+
+        # Almaceno los resultados obtenidos en los historiales
+        historial_mejores_fitness.append(mejor_fitness)
+        historial_mejores_soluciones.append(mejor_solucion)
+
+        # Actualizo la barra de progreso
+        progreso['value'] = (i + 1) / iteraciones * 100
+        pantalla.update_idletasks()
+
+    # Calculo el mejor fitness y mejor solución de la ejecución
+    mejor_fitness = min(historial_mejores_fitness)
+    mejor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(mejor_fitness)]
+
+    # Calculo el peor fitness y peor solucion de la iteracion
+    peor_fitness = max(historial_mejores_fitness)
+    peor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(peor_fitness)]
+
+    # Saco el promedio de los fitness
+    promedio_fitness = sum(historial_mejores_fitness) / len(historial_mejores_fitness)
+
+    # Retorno los valores calculados
+    return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness
+
+
 def calcular_niveles(individuo, rectangulos, W):
     # Variables a utilizar para calcular la altura del individuo
     niveles = []

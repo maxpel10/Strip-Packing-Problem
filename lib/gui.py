@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from lib.strip_pack import run
+from lib.strip_pack import obtener_resultados
 from lib.utils import dibujar_solucion, get_info_instancia
 
 
@@ -138,6 +138,10 @@ def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_soluci
 
 
 def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, progreso_label, progreso, pantalla):
+    # Hago aparecer la barra de progreso
+    progreso_label.grid(row=10, column=0)
+    progreso.grid(row=10, column=1)
+
     # Obtengo los rectángulos de la instancia a ejecutar
     rectangulos, w = get_info_instancia('resources/spp_instances/' + combo + '.txt')
 
@@ -148,53 +152,14 @@ def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, 
                                                                                                       tamano_poblacion,
                                                                                                       pm, pc,
                                                                                                       generaciones,
-                                                                                                      progreso_label,
                                                                                                       progreso,
                                                                                                       pantalla)
-
-    # Muestro los resultados
-    pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w)
-
-
-def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm, pc, generaciones, progreso_label,
-                       progreso, pantalla):
-    # Hago aparecer la barra de progreso
-    progreso_label.grid(row=10, column=0)
-    progreso.grid(row=10, column=1)
-
-    # Creo las listas para almacenar los mejores fitness y soluciones de cada iteración
-    historial_mejores_fitness = []
-    historial_mejores_soluciones = []
-
-    # Itero la cantidad de veces ingresadas por pantalla
-    for i in range(iteraciones):
-        # Obtengo mejor fitness y mejor solución de la iteración
-        mejor_fitness, mejor_solucion = run(rectangulos, w, rotar, tamano_poblacion, pm, pc, generaciones)
-
-        # Almaceno los resultados obtenidos en los historiales
-        historial_mejores_fitness.append(mejor_fitness)
-        historial_mejores_soluciones.append(mejor_solucion)
-
-        # Actualizo la barra de progreso
-        progreso['value'] = (i + 1) / iteraciones * 100
-        pantalla.update_idletasks()
-
-    # Calculo el mejor fitness y mejor solución de la ejecución
-    mejor_fitness = min(historial_mejores_fitness)
-    mejor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(mejor_fitness)]
-
-    # Calculo el peor fitness y peor solucion de la iteracion
-    peor_fitness = max(historial_mejores_fitness)
-    peor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(peor_fitness)]
-
-    # Saco el promedio de los fitness
-    promedio_fitness = sum(historial_mejores_fitness) / len(historial_mejores_fitness)
 
     # Reseteo la barra de progreso
     progreso['value'] = 0
 
-    # Retorno los valores calculados
-    return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness
+    # Muestro los resultados
+    pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w)
 
 
 # Guia de colores y fuentes
