@@ -109,7 +109,7 @@ def set_up_resultado(pantalla):
     pantalla.resizable(0, 0)
 
 
-def pantalla_resultados(mejor_solucion, peor_solucion, promedio_fitness, rectangulos, w):
+def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w):
     # Puesta a punto de la pantalla
     pantalla = Toplevel()
     pantalla.grab_set()
@@ -120,13 +120,15 @@ def pantalla_resultados(mejor_solucion, peor_solucion, promedio_fitness, rectang
         pady=20)
 
     mejor_grafico = FigureCanvasTkAgg(
-        dibujar_solucion(mejor_solucion, 'Mejor solucion', rectangulos, w, bgcolor, fontcolor),
+        dibujar_solucion(mejor_solucion, 'Mejor solucion (' + str(mejor_fitness) + ')', rectangulos, w, bgcolor,
+                         fontcolor),
         pantalla)
     mejor_grafico.draw()
     mejor_grafico.get_tk_widget().pack(side=LEFT)
 
     peor_grafico = FigureCanvasTkAgg(
-        dibujar_solucion(peor_solucion, 'Peor solucion', rectangulos, w, bgcolor, fontcolor),
+        dibujar_solucion(peor_solucion, 'Peor solucion (' + str(peor_fitness) + ')', rectangulos, w, bgcolor,
+                         fontcolor),
         pantalla)
     peor_grafico.draw()
     peor_grafico.get_tk_widget().pack(side=RIGHT)
@@ -140,12 +142,18 @@ def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, 
     rectangulos, w = get_info_instancia('resources/spp_instances/' + combo + '.txt')
 
     # Obtengo los resultados de la ejecucion
-    mejor_solucion, peor_solucion, promedio_fitness = obtener_resultados(rectangulos, w, iteraciones, rotar,
-                                                                         tamano_poblacion, pm, pc, generaciones,
-                                                                         progreso_label, progreso, pantalla)
+    mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness = obtener_resultados(rectangulos, w,
+                                                                                                      iteraciones,
+                                                                                                      rotar,
+                                                                                                      tamano_poblacion,
+                                                                                                      pm, pc,
+                                                                                                      generaciones,
+                                                                                                      progreso_label,
+                                                                                                      progreso,
+                                                                                                      pantalla)
 
     # Muestro los resultados
-    pantalla_resultados(mejor_solucion, peor_solucion, promedio_fitness, rectangulos, w)
+    pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w)
 
 
 def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm, pc, generaciones, progreso_label,
@@ -186,7 +194,7 @@ def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm,
     progreso['value'] = 0
 
     # Retorno los valores calculados
-    return mejor_solucion, peor_solucion, promedio_fitness
+    return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness
 
 
 # Guia de colores y fuentes
@@ -195,6 +203,3 @@ buttoncolor = '#7289DA'
 fontcolor = '#FFFFFF'
 titulos = ('Helvetica', 12)
 labels = ('Helvetica', 10)
-
-# Ejecuto la gui
-pantalla_principal()

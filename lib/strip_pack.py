@@ -1,7 +1,6 @@
 import random
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 
 
 def calcular_niveles(individuo, rectangulos, W):
@@ -114,8 +113,8 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         # Si no está activada la rotación
         else:
             # Obtengo una lista con todos elementos falsos y armo los nuevos individuos
-            h1 = corregir_rotacion(list(zip(h1_permutacion, [False] * len(p1))))
-            h2 = corregir_rotacion(list(zip(h2_permutacion, [False] * len(p1))))
+            h1 = list(zip(h1_permutacion, [False] * len(p1)))
+            h2 = list(zip(h2_permutacion, [False] * len(p1)))
 
         # Retorno los hijos
         return h1, h2
@@ -173,16 +172,19 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         gen_1 = x[indice_1]
         gen_2 = x[indice_2]
 
+        # Genero una copia de x
+        y = x[:]
+
         # Intercambio genes
-        x[indice_1] = gen_2
-        x[indice_2] = gen_1
+        y[indice_1] = gen_2
+        y[indice_2] = gen_1
 
         # Corrijo los elementos que tiene más ancho de lo permido si la rotación está activada
-        return corregir_rotacion(x) if rotar else x
+        return corregir_rotacion(y) if rotar else y
 
     def mutar_poblacion_aleatoriamente():
         # Aplico mutación aleatoria
-        return list(map(lambda x: x if random.uniform(0, 1) > pm else mutar_individuo(x), poblacion))
+        return list(map(lambda x: x if random.uniform(0, 1) > pm else mutar_individuo(x), nueva_poblacion))
 
     # Generar una semilla que dependa del tiempo asi produzco
     # independencia en la secuencia de numeros aleatorios utilizados
@@ -229,10 +231,7 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
             nueva_poblacion.append(hijo_1)
             nueva_poblacion.append(hijo_2)
 
-        # Reemplazo la vieja población por una nueva
-        poblacion = nueva_poblacion
-
-        # Aplico la mutación
+        # Aplico la mutación y reemplazo la vieja población por una nueva
         poblacion = mutar_poblacion_aleatoriamente()
 
         # Calculo el fitness de la poblacion
@@ -240,11 +239,11 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
 
         # Calculo el mejor fitness de la población actual
         mejor_fitness = min(fitness)
-        mejor_solucion_inicial = poblacion[fitness.index(mejor_fitness)]
+        mejor_solucion_actual = poblacion[fitness.index(mejor_fitness)]
 
         # Lo agrego al historial
         historial_mejores_fitness.append(mejor_fitness)
-        historial_mejores_individuos.append(mejor_solucion_inicial)
+        historial_mejores_individuos.append(mejor_solucion_actual)
 
     # Calculo mejor fitness y mejor individuo solución
     mejor_fitness = min(historial_mejores_fitness)

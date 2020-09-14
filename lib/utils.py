@@ -50,7 +50,7 @@ def dibujar_solucion(individuo, titulo, rectangulos, W, bgcolor, textcolor):
     plt.ylim(0, 35)
 
     # Darle un titulo al gráfico
-    plt.title(titulo + ' (' + str(altura) + ')', color=textcolor)
+    plt.title(titulo, color=textcolor)
 
     # Dibujo los rectángulos según el nivel al que pertenecen
     for nivel in niveles:
