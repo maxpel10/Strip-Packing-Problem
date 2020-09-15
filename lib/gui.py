@@ -1,3 +1,4 @@
+import time
 from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
@@ -49,9 +50,10 @@ def pantalla_principal():
     # Setear valores por defecto
     pm.set(0.1)
     pc.set(0.65)
-    generaciones.set(5000)
+    generaciones.set(500)
     tamano_poblacion.set(50)
     iteraciones.set(10)
+    rotar.set(True)
     progreso['value'] = 0
 
     # Widgets de la pantalla
@@ -102,22 +104,23 @@ def set_up_resultado(pantalla):
     # Color de fondo
     pantalla.configure(bg=bgcolor)
 
-    # Hacer que esté a pantalla completa
+    # Ubicación de la pantalla
     pantalla.state('zoomed')
 
     # No permitir que se redimensione
     pantalla.resizable(0, 0)
 
 
-def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w):
+def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
+                        desviacion_fitness, tiempo_transcurrido, rectangulos, w):
     # Puesta a punto de la pantalla
     pantalla = Toplevel()
     pantalla.grab_set()
     set_up_resultado(pantalla)
 
     # Widgets de la pantalla
-    Label(pantalla, text='Promedio fitness: ' + str(promedio_fitness), bg=bgcolor, fg=fontcolor, font=titulos).pack(
-        pady=20)
+
+    Label(pantalla, text="Resultados", bg=bgcolor, fg=fontcolor, font=titulo_grande).pack(pady=20, side=TOP)
 
     mejor_grafico = FigureCanvasTkAgg(
         dibujar_solucion(mejor_solucion, 'Mejor solucion (' + str(mejor_fitness) + ')', rectangulos, w, bgcolor,
@@ -133,6 +136,16 @@ def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_soluci
     peor_grafico.draw()
     peor_grafico.get_tk_widget().pack(side=RIGHT)
 
+    Label(pantalla, bg=bgcolor, fg=fontcolor, font=labels).pack(pady=20, side=BOTTOM)
+    Label(pantalla, text='Desviación: ' + str(round(desviacion_fitness, 2)), bg=bgcolor, fg=fontcolor,
+          font=labels).pack(side=BOTTOM)
+    Label(pantalla, text='Mediana: ' + str(mediana_fitness), bg=bgcolor, fg=fontcolor, font=labels).pack(side=BOTTOM)
+    Label(pantalla, text='Valor medio: ' + str(round(media_fitness, 2)), bg=bgcolor, fg=fontcolor, font=labels).pack(
+        side=BOTTOM)
+
+    Label(pantalla, text='Tiempo transcurrido: ' + str(round(tiempo_transcurrido, 2)) + ' seg', bg=bgcolor,
+          fg=fontcolor, font=labels).pack(side=BOTTOM)
+
     # Ejecutar pantalla
     pantalla.mainloop()
 
@@ -145,26 +158,35 @@ def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, 
     # Obtengo los rectángulos de la instancia a ejecutar
     rectangulos, w = get_info_instancia('resources/spp_instances/' + combo + '.txt')
 
+    # Guardo el tiempo actual
+    t0 = time.clock()
+
     # Obtengo los resultados de la ejecucion
-    mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness = obtener_resultados(rectangulos, w,
-                                                                                                      iteraciones,
-                                                                                                      rotar,
-                                                                                                      tamano_poblacion,
-                                                                                                      pm, pc,
-                                                                                                      generaciones,
-                                                                                                      progreso,
-                                                                                                      pantalla)
+    mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness, desviacion_fitness, = obtener_resultados(
+        rectangulos, w,
+        iteraciones,
+        rotar,
+        tamano_poblacion,
+        pm, pc,
+        generaciones,
+        progreso,
+        pantalla)
+
+    # Guardo el tiempo transcurrido
+    t1 = time.clock() - t0
 
     # Reseteo la barra de progreso
     progreso['value'] = 0
 
     # Muestro los resultados
-    pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness, rectangulos, w)
+    pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
+                        desviacion_fitness, t1, rectangulos, w)
 
 
 # Guia de colores y fuentes
 bgcolor = '#2C2F33'
 buttoncolor = '#7289DA'
 fontcolor = '#FFFFFF'
+titulo_grande = ('Helvetica', 20)
 titulos = ('Helvetica', 12)
 labels = ('Helvetica', 10)

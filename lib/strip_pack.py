@@ -29,11 +29,20 @@ def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm,
     peor_fitness = max(historial_mejores_fitness)
     peor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(peor_fitness)]
 
-    # Saco el promedio de los fitness
-    promedio_fitness = sum(historial_mejores_fitness) / len(historial_mejores_fitness)
+    # Creo un arreglo numpy para obtener los valores estadísticos
+    l = np.array(historial_mejores_fitness,int)
+
+    # Saco la media de los fitness
+    media_fitness = l.mean()
+
+    # Saco la mediana de los fitness
+    mediana_fitness = int(np.median(l))
+
+    # Saco la desviación de los fitness
+    desviacion_fitness = l.std()
 
     # Retorno los valores calculados
-    return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, promedio_fitness
+    return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness, desviacion_fitness
 
 
 def calcular_niveles(individuo, rectangulos, W):
