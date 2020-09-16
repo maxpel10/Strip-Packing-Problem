@@ -30,22 +30,22 @@ def obtener_resultados(rectangulos, w, iteraciones, rotar, tamano_poblacion, pm,
     peor_solucion = historial_mejores_soluciones[historial_mejores_fitness.index(peor_fitness)]
 
     # Creo un arreglo numpy para obtener los valores estadísticos
-    l = np.array(historial_mejores_fitness,int)
+    lista = np.array(historial_mejores_fitness, int)
 
     # Saco la media de los fitness
-    media_fitness = l.mean()
+    media_fitness = lista.mean()
 
     # Saco la mediana de los fitness
-    mediana_fitness = int(np.median(l))
+    mediana_fitness = int(np.median(lista))
 
     # Saco la desviación de los fitness
-    desviacion_fitness = l.std()
+    desviacion_fitness = lista.std()
 
     # Retorno los valores calculados
     return mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness, desviacion_fitness
 
 
-def calcular_niveles(individuo, rectangulos, W):
+def calcular_niveles(individuo, rectangulos, W, rotar):
     # Variables a utilizar para calcular la altura del individuo
     niveles = []
     nivel_actual = []
@@ -53,8 +53,16 @@ def calcular_niveles(individuo, rectangulos, W):
 
     # Acomodo los rectangulos en niveles
     for j in individuo:
-        w_j = rectangulos[int(j[0])].w if not j[1] else rectangulos[int(j[0])].h
-        h_j = rectangulos[int(j[0])].h if not j[1] else rectangulos[int(j[0])].w
+
+        # Si está la rotación activada chequeo si hay que rotar el rectángulo
+        if rotar:
+            w_j = rectangulos[int(j[0])].w if not j[1] else rectangulos[int(j[0])].h
+            h_j = rectangulos[int(j[0])].h if not j[1] else rectangulos[int(j[0])].w
+        # Si no utilizo el ancho y alto por defecto
+        else:
+            w_j = rectangulos[j].w
+            h_j = rectangulos[j].h
+
         # Si el rectángulo cabe en el nivel actual lo agrego
         if ancho_nivel_actual + w_j <= W:
             nivel_actual.append(h_j)
@@ -79,18 +87,19 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         # que indica la rotación o no de cada elemento del individuo
         rotacion = []
 
-        # Si está activada la rotación, los booleanos son randoms
+        # Si está activada la rotación genero una lista de tuplas
+        # resultantes de combinar una permutación random y una lista de booleanos randoms
         if rotar:
+            # Genero una lista de booleanos random
             for j in range(len(rectangulos)):
                 rotacion.append(bool(random.getrandbits(1)))
-        # Si no está actuvada la rotación, los booleanos son todos False
+            # Combino los booleanos con una permutación de enteros
+            return list(map(lambda x: corregir_rotacion(x) if rotar else x,
+                            [list(zip(np.random.permutation(range(len(rectangulos))), rotacion)) for _ in
+                             range(tamano_poblacion)]))
+        # Si no, genero una lista con permutaciones de enteros
         else:
-            rotacion = [False] * len(rectangulos)
-
-        # Combino los booleanos con la permutación
-        return list(map(lambda x: corregir_rotacion(x) if rotar else x,
-                        [list(zip(np.random.permutation(range(len(rectangulos))), rotacion)) for _ in
-                         range(tamano_poblacion)]))
+            return [np.random.permutation(range(len(rectangulos))).tolist() for _ in range(tamano_poblacion)]
 
     def corregir_rotacion(individuo):
         # Si el elemento del individuo está rotado y supera los límites del strip se deshace la rotación
@@ -103,7 +112,7 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
 
     def altura_individuo(individuo):
         # Obtengo la altura del individuo
-        _, altura = calcular_niveles(individuo, rectangulos, W)
+        _, altura = calcular_niveles(individuo, rectangulos, W, rotar)
 
         return altura
 
@@ -130,20 +139,23 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
         return poblacion[ganador]
 
     def crossover(p1, p2):
-        # Tomo la primer componente de cada elemento del padre, es decir, el elemento correspondiente a la permutacion
-        p1_permutacion = [j[0] for j in p1]
-        p2_permutacion = [j[0] for j in p2]
 
-        # Realizo el pmx sobre las permutaciones
-        h1_permutacion = pmx(p1_permutacion, p2_permutacion)
-        h2_permutacion = pmx(p2_permutacion, p1_permutacion)
-
-        # Tomo la segunda componente de cada elemento del padre, es decir, el elemento correspondiente a la rotacion
-        p1_rotacion = [j[1] for j in p1]
-        p2_rotacion = [j[1] for j in p2]
-
-        # Si está activada la rotación
+        # Si está activada la rotación hago crossover de la permutación y de los booleanos random por separado
         if rotar:
+            # Tomo la primer componente de cada elemento del padre, es decir, el
+            # elemento correspondiente a la permutacion
+            p1_permutacion = [j[0] for j in p1]
+            p2_permutacion = [j[0] for j in p2]
+
+            # Tomo la segunda componente de cada elemento del padre, es decir,
+            # el elemento correspondiente a la rotacion
+            p1_rotacion = [j[1] for j in p1]
+            p2_rotacion = [j[1] for j in p2]
+
+            # Realizo el pmx sobre las permutaciones
+            h1_permutacion = pmx(p1_permutacion, p2_permutacion)
+            h2_permutacion = pmx(p2_permutacion, p1_permutacion)
+
             # Realizo el crossover correspondiente a la rotación
             h1_rotacion = crossover_rotacion(p1_rotacion, p2_rotacion)
             h2_rotacion = crossover_rotacion(p2_rotacion, p1_rotacion)
@@ -151,12 +163,11 @@ def run(rectangulos, W, rotar, tamano_poblacion, pm, pc, max_generaciones):
             # Armo los nuevos individuos
             h1 = corregir_rotacion(list(zip(h1_permutacion, h1_rotacion)))
             h2 = corregir_rotacion(list(zip(h2_permutacion, h2_rotacion)))
-
-        # Si no está activada la rotación
+        # Si no está activada solo realizo el pmx
         else:
-            # Obtengo una lista con todos elementos falsos y armo los nuevos individuos
-            h1 = list(zip(h1_permutacion, [False] * len(p1)))
-            h2 = list(zip(h2_permutacion, [False] * len(p1)))
+            # Realizo el pmx sobre los padres
+            h1 = pmx(list(p1), list(p2))
+            h2 = pmx(list(p2), list(p1))
 
         # Retorno los hijos
         return h1, h2

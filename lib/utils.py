@@ -4,7 +4,7 @@ from lib.strip_pack import calcular_niveles
 
 
 # Función para graficar un individuo
-def dibujar_solucion(individuo, titulo, rectangulos, W, bgcolor, textcolor):
+def dibujar_solucion(individuo, titulo, rectangulos, W, bgcolor, textcolor, rotar):
     # Función para obtener las coordenadas absolutas del rectangulo
     def get_coordenadas(ancho, alto, x_inicial, y_inicial):
         x_r = [x_inicial, x_inicial + ancho, x_inicial + ancho, x_inicial, x_inicial]
@@ -12,7 +12,7 @@ def dibujar_solucion(individuo, titulo, rectangulos, W, bgcolor, textcolor):
         return x_r, y_r
 
     # Obtengo la información sobre la ubicación de los rectángulos
-    niveles, altura = calcular_niveles(individuo, rectangulos, W)
+    niveles, altura = calcular_niveles(individuo, rectangulos, W, rotar)
 
     # Lleva el índice del rectángulo a graficar
     nro_individuo = 0
@@ -55,12 +55,22 @@ def dibujar_solucion(individuo, titulo, rectangulos, W, bgcolor, textcolor):
     # Dibujo los rectángulos según el nivel al que pertenecen
     for nivel in niveles:
         for _ in nivel:
-            # Obtengo el rectangulo
-            rectagulo = rectangulos[individuo[nro_individuo][0]]
+            # Si el individuo está rotado utilizo el ancho y alto correspondiente
+            if rotar:
+                # Obtengo el rectangulo
+                rectagulo = rectangulos[individuo[nro_individuo][0]]
 
-            # Seteo el ancho y el alto según si tiene la rotación activada o no
-            w = rectagulo.w if not individuo[nro_individuo][1] else rectagulo.h
-            h = rectagulo.h if not individuo[nro_individuo][1] else rectagulo.w
+                # Seteo el ancho y el alto según si tiene la rotación activada o no
+                w = rectagulo.w if not individuo[nro_individuo][1] else rectagulo.h
+                h = rectagulo.h if not individuo[nro_individuo][1] else rectagulo.w
+            # Si no utilizo el ancho y alto por defecto
+            else:
+                # Obtengo el rectangulo
+                rectagulo = rectangulos[individuo[nro_individuo]]
+
+                # Seteo el ancho y el alto
+                w = rectagulo.w
+                h = rectagulo.h
 
             # Obtengo las coordenadas absolutas del rectángulo
             coordenadas_x, coordenadas_y = get_coordenadas(w, h, x, y)

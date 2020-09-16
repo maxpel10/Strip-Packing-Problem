@@ -112,7 +112,7 @@ def set_up_resultado(pantalla):
 
 
 def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
-                        desviacion_fitness, tiempo_transcurrido, rectangulos, w):
+                        desviacion_fitness, tiempo_transcurrido, rectangulos, w, rotar):
     # Puesta a punto de la pantalla
     pantalla = Toplevel()
     pantalla.grab_set()
@@ -124,15 +124,14 @@ def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_soluci
 
     mejor_grafico = FigureCanvasTkAgg(
         dibujar_solucion(mejor_solucion, 'Mejor solucion (' + str(mejor_fitness) + ')', rectangulos, w, bgcolor,
-                         fontcolor),
+                         fontcolor, rotar),
         pantalla)
     mejor_grafico.draw()
     mejor_grafico.get_tk_widget().pack(side=LEFT)
 
     peor_grafico = FigureCanvasTkAgg(
-        dibujar_solucion(peor_solucion, 'Peor solucion (' + str(peor_fitness) + ')', rectangulos, w, bgcolor,
-                         fontcolor),
-        pantalla)
+        dibujar_solucion(peor_solucion, 'Peor solucion (' + str(peor_fitness) + ')',
+                         rectangulos, w, bgcolor, fontcolor, rotar), pantalla)
     peor_grafico.draw()
     peor_grafico.get_tk_widget().pack(side=RIGHT)
 
@@ -180,7 +179,7 @@ def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, 
 
     # Muestro los resultados
     pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
-                        desviacion_fitness, t1, rectangulos, w)
+                        desviacion_fitness, t1, rectangulos, w, rotar)
 
 
 # Guia de colores y fuentes
