@@ -48,11 +48,11 @@ def pantalla_principal():
     progreso = Progressbar(pantalla, orient=HORIZONTAL, length=100, mode='determinate')
 
     # Setear valores por defecto
-    pm.set(0.1)
+    pm.set(0.05)
     pc.set(0.65)
-    generaciones.set(500)
+    generaciones.set(1000)
     tamano_poblacion.set(50)
-    iteraciones.set(10)
+    iteraciones.set(20)
     rotar.set(True)
     progreso['value'] = 0
 
@@ -112,7 +112,8 @@ def set_up_resultado(pantalla):
 
 
 def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
-                        desviacion_fitness, tiempo_transcurrido, rectangulos, w, rotar):
+                        desviacion_fitness, tiempo_transcurrido, rectangulos, w, rotar, tamano_poblacion, combo, pm, pc,
+                        generaciones, iteraciones):
     # Puesta a punto de la pantalla
     pantalla = Toplevel()
     pantalla.grab_set()
@@ -121,6 +122,15 @@ def pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_soluci
     # Widgets de la pantalla
 
     Label(pantalla, text="Resultados", bg=bgcolor, fg=fontcolor, font=titulo_grande).pack(pady=20, side=TOP)
+    Label(pantalla, text="Instancia: " + combo, bg=bgcolor, fg=fontcolor, font=labels).pack(side=TOP)
+    Label(pantalla, text="Rotar: " + str(rotar), bg=bgcolor, fg=fontcolor, font=labels).pack(side=TOP)
+    Label(pantalla, text="pm: " + str(pm), bg=bgcolor, fg=fontcolor, font=labels).pack(side=TOP)
+    Label(pantalla, text="pc: " + str(pc), bg=bgcolor, fg=fontcolor, font=labels).pack(side=TOP)
+    Label(pantalla, text="Generaciones: " + str(generaciones), bg=bgcolor, fg=fontcolor, font=labels).pack(side=TOP)
+    Label(pantalla, text="Tamaño población: " + str(tamano_poblacion), bg=bgcolor, fg=fontcolor, font=labels).pack(
+        side=TOP)
+    Label(pantalla, text="Iteraciones: " + str(iteraciones), bg=bgcolor, fg=fontcolor, font=labels).pack(
+        side=TOP)
 
     mejor_grafico = FigureCanvasTkAgg(
         dibujar_solucion(mejor_solucion, 'Mejor solucion (' + str(mejor_fitness) + ')', rectangulos, w, bgcolor,
@@ -179,7 +189,8 @@ def ejecutar(iteraciones, rotar, tamano_poblacion, combo, pm, pc, generaciones, 
 
     # Muestro los resultados
     pantalla_resultados(mejor_fitness, mejor_solucion, peor_fitness, peor_solucion, media_fitness, mediana_fitness,
-                        desviacion_fitness, t1, rectangulos, w, rotar)
+                        desviacion_fitness, t1, rectangulos, w, rotar, tamano_poblacion, combo, pm, pc, generaciones,
+                        iteraciones)
 
 
 # Guia de colores y fuentes
